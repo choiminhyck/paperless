@@ -1,0 +1,250 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@include file="/WEB-INF/views/common.jsp" %>
+<%@include file="/WEB-INF/views/report_common.jsp" %>
+<%@include file="/WEB-INF/views/mainCatagory.jsp" %>
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Insert title here</title>
+		<link href="/css/dashBoard.css" rel="stylesheet">
+		
+		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+		<script>
+		
+			$(function(){
+				var formObj = $("[name=chartDataSearchForm]");
+				
+				<c:if test="${!empty param.approvalCnt_year}">
+					formObj.find(".approvalCnt_year").val("${param.approvalCnt_year}");
+				</c:if>
+				
+				<c:if test="${!empty param.approvalState_reportCode}">
+					formObj.find(".approvalState_reportCode").val("${param.approvalState_reportCode}");
+				</c:if>
+			
+				<c:if test="${!empty param.approvalState_year}">
+					formObj.find(".approvalState_year").val("${param.approvalState_year}");
+				</c:if>
+				
+				<c:if test="${!empty param.approvalState_month}">
+					formObj.find(".approvalState_month").val("${param.approvalState_month}");
+				</c:if>
+				
+				<c:if test="${!empty param.typeNo_reportCode}">
+					formObj.find(".typeNo_reportCode").val("${param.typeNo_reportCode}");
+				</c:if>
+			
+				<c:if test="${!empty param.typeNo_year}">
+					formObj.find(".typeNo_year").val("${param.typeNo_year}");
+				</c:if>
+			});
+			
+			function goDashBoard(){
+				document.chartDataSearchForm.submit();
+			}
+		
+			google.charts.load('current', {'packages':['line']}); // 꺾은 선 그래프
+			google.charts.load('current', {'packages':['bar']}); // 막대 그래프
+			google.charts.load('current', {'packages':['corechart']}); // 원형 그래프
+			
+			
+			// 년도별 결재 횟수
+			google.charts.setOnLoadCallback(reportApprovalCnt);
+			// 월별 결재 상태
+	      	google.charts.setOnLoadCallback(reportApprovalState);
+			// 항목별 갯수
+	      	google.charts.setOnLoadCallback(reportTypeNo);
+			
+			
+	     	// 년도별 결재 횟수 (꺾은 선 그래프)
+			function reportApprovalCnt(){
+				
+				var data = new google.visualization.DataTable();
+				
+				data.addColumn('string');
+				data.addColumn('number', '일일');
+				data.addColumn('number', '지출');
+			    data.addColumn('number', '영업');
+			    
+			    //var dataRow = [];
+			    
+			    data.addRows([
+			    	<c:forEach var="Cnt" items="${requestScope.ApprovalCnt}">
+	                	["${Cnt.month}", ${Cnt.daily}, ${Cnt.expense}, ${Cnt.sales}],
+	                </c:forEach>
+			    ]);
+			    
+			    var options = {
+			    		fontsize: 15
+			    		, width: 450
+			    		, height: 320
+			    		, vAxis: {
+			    			title: '횟수'
+			    		}
+			    }
+			    
+			    var chart = new google.charts.Line(document.getElementById('reportApprovalCnt_div'));
+			    chart.draw(data, google.charts.Line.convertOptions(options));
+			}
+	     	
+	     	
+	     	// 월별 결재 상태 (막대 그래프)
+	     	function reportApprovalState(){
+	     		
+	     		var color1 = "#b87333";
+	     		var color2 = "silver";
+	     		var color3 = "gold";
+	     		var color4 = "#e5e4e2";
+	     		
+	     		var data = google.visualization.arrayToDataTable([
+	     			["결재상태", "개수", { role: "style" }]
+	     			<c:forEach var="state" items="${requestScope.ApprovalState}">
+                		, ["${state.approval_name}", ${state.cnt}, "color${loopTagStatus.index}"]
+	                </c:forEach>
+	     		]);
+	     		
+	     		var view = new google.visualization.DataView(data);
+	     		view.setColumns([
+	     			0
+	     			, 1
+	     			, {
+	     				calc: "stringify"
+	     				, sourceColumn: 1
+	     				, type: "string"
+	     				, role: "annotation"
+	     			}
+	     			, 2
+	     		])
+	     		
+	     		var options = {
+	     				fontsize: 15
+			    		, width: 490
+			    		, height: 320
+			    		, legend: { position: "none" }
+	     		};
+	     		
+	     		
+	     		var chart = new google.visualization.BarChart(document.getElementById('reportApprovalState_div'));
+	            chart.draw(view, options);
+	     	}
+	     	
+	     	// 업무구분별 갯수 (원형 그래프)
+	     	function reportTypeNo(){
+	     		
+	     		var data = new google.visualization.DataTable();
+	            data.addColumn('string', 'Topping');
+	            data.addColumn('number', 'Slices');
+	            data.addRows([
+	                <c:forEach var="typecode" items="${requestScope.TypeNo}">
+	                	["${typecode.type_name}", ${typecode.cnt}],
+	                </c:forEach>
+	            ]);
+	            
+	     		var options = {
+	     				fontsize: 15
+			    		, width: 490
+			    		, height: 340
+	     		};
+	     		
+	     		var chart = new google.visualization.PieChart(document.getElementById('reportTypeNo_chart_div'));
+	            chart.draw(data, options);
+	     	}
+		</script>
+	</head>
+	<body>
+		<div class="container">
+		
+		<form name="chartDataSearchForm" method="post" action="/dashBoard.do">
+		
+			<div class="report_table">
+				<div class="chart">
+					<div class="chart_title">
+						<div class="chart_title_info">
+							<span>보고서 작성 횟수</span>
+						</div>
+						<div class="chart_select">
+							<select name="approvalCnt_year" class="approvalCnt_year year" onchange="goDashBoard()">
+							</select>년
+						</div>
+					</div><!-- chart_title -->
+					<div id="reportApprovalCnt_div"></div><!-- reportApprovalCnt_div -->
+				</div><!-- chart -->
+			</div><!-- report_table -->
+			
+			
+			
+			<div class="report_table">
+				<div class="chart">
+					<div class="chart_title">
+						<div class="chart_title_info">
+							<span>등록한 보고서 결재 상태</span>
+						</div>
+						<div class="chart_select">
+							<select name="approvalState_year" class="approvalState_year year" onchange="goDashBoard()">
+							</select>년
+							
+							<select name="approvalState_month" class="approvalState_month month" onchange="goDashBoard()">
+							</select>월
+							
+							<select name="approvalState_reportCode" class="approvalState_reportCode" onchange="goDashBoard()">
+								<option value="1">일일</option>
+								<option value="2">지출</option>
+								<option value="3">영업</option>
+							</select>
+						</div>
+					</div><!-- chart_title -->
+					
+					<div id="reportApprovalState_div"></div><!-- reportApprovalCnt_div -->
+				</div><!-- chart -->
+			</div><!-- report_table -->
+			
+			
+			
+			<div class="report_table">
+				<div class="chart">
+					<div class="chart_title">
+						<div class="chart_title_info">
+							<span>등록한 보고서 업무별 개수</span>
+						</div>
+						<div class="chart_select">
+							<select name="typeNo_year" class="typeNo_year year" onchange="goDashBoard()">
+							</select>년
+							
+							<select name="typeNo_reportCode" class="typeNo_reportCode" onchange="goDashBoard()">
+								<option value="1">일일</option>
+								<option value="2">지출</option>
+								<option value="3">영업</option>
+							</select>
+						</div>
+					</div><!-- chart_title -->
+					
+					<div id="reportTypeNo_chart_div"></div><!-- reportApprovalCnt_div -->
+				</div><!-- chart -->
+			</div><!-- report_table -->
+			
+			
+			<div class="report_table">
+				<div class="chart">
+					<div class="chart_title">
+						<div class="chart_title_info">
+							<span>보고서 결재 요청 목록</span>
+						</div>
+					</div><!-- chart_title -->
+					<div id="approval_List">
+						<div class="approval_info">
+							<!-- <img class="emp_img" alt="사원사진" src="/img/"> -->
+							<span></span>
+						</div>
+					</div><!-- chart_content -->
+				</div><!-- chart -->
+			</div><!-- report_table -->
+			
+			
+			</form><!-- chartDataSearchForm -->
+			
+		</div><!-- container -->
+	</body>
+</html>

@@ -1,0 +1,4 @@
+INDEX VERSION 1.131+C:\Users\chlal\OneDrive\πŸ≈¡ »≠∏È\project_1221\.metadata\.plugins\org.eclipse.jdt.core
+968462895.index
+1865797976.index
+1777458158.index
